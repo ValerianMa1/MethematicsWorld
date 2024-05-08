@@ -9,9 +9,10 @@ import requests
 from tqdm import tqdm
 import py7zr
 
+# 在这改成自己的代理地址端口
 proxies = {
-    "http": "http://127.0.0.1:7897",
-    "https": "http://127.0.0.1:7897",
+    "http": "http://127.0.0.1:7890",
+    "https": "http://127.0.0.1:7890",
 }
 
 def download_file(url, filename):
