@@ -1,0 +1,13 @@
+.vscode
+.ignore
+.idea
+build
+CMakeOutput
+cmake-build-debug
+CMakeUserPresets.json
+cmake-*
+GLFW
+glfw-*
+mingw*
+ninja
+Eigen/
