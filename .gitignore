@@ -1,5 +1,6 @@
 .vscode
 .ignore
+.idea
 build
 CMakeOutput
 cmake-build-debug
@@ -9,3 +10,4 @@ GLFW
 glfw-*
 mingw*
 ninja
+Eigen/

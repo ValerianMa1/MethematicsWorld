@@ -37,13 +37,14 @@ def download_file(url, filename):
             size = f.write(data)
             bar.update(size)
 
-download_url = 'https://github.com/niXman/mingw-builds-binaries/releases/download/13.2.0-rt_v11-rev0/x86_64-13.2.0-release-win32-seh-msvcrt-rt_v11-rev0.7z'
-save_path = 'mingw.7z'
+download_url = 'https://github.com/brechtsanders/winlibs_mingw/releases/download/14.1.0posix-18.1.5-11.0.1-msvcrt-r1/winlibs-i686-posix-dwarf-gcc-14.1.0-llvm-18.1.5-mingw-w64msvcrt-11.0.1-r1.zip'
+save_path = 'mingw.zip'
 download_file(download_url, save_path)
 extract_to_path = '.'
-shutil.rmtree("mingw64", True)
-with py7zr.SevenZipFile(save_path, mode='r') as z:
-    z.extractall(extract_to_path)
+shutil.rmtree("mingw32", True)
+with zipfile.ZipFile(save_path, 'r') as zip_ref:
+    zip_ref.extractall(extract_to_path)
+# os.rename("mingw32", "mingw64")
 os.remove(save_path)
 
 download_url = 'https://github.com/Kitware/CMake/releases/download/v3.29.3/cmake-3.29.3-windows-x86_64.zip'
@@ -65,12 +66,22 @@ shutil.rmtree('glfw-3.4', True)
 with zipfile.ZipFile(save_path, 'r') as zip_ref:
     zip_ref.extractall(extract_to_path)
 os.remove(save_path)
-    
+
 download_url = "https://github.com/ninja-build/ninja/releases/download/v1.12.0/ninja-win.zip"
 save_path = 'ninja-win.zip'
 download_file(download_url, save_path)
 extract_to_path = 'ninja'
 shutil.rmtree(extract_to_path, True)
+# 打开 ZIP 文件并解压全部内容
+with zipfile.ZipFile(save_path, 'r') as zip_ref:
+    zip_ref.extractall(extract_to_path)
+os.remove(save_path)
+
+download_url = "https://gitlab.com/libeigen/eigen/-/archive/3.4.0/eigen-3.4.0.zip"
+save_path = 'eigen-3.4.0.zip'
+download_file(download_url, save_path)
+extract_to_path = '.'
+shutil.rmtree("eigen-3.4.0", True)
 # 打开 ZIP 文件并解压全部内容
 with zipfile.ZipFile(save_path, 'r') as zip_ref:
     zip_ref.extractall(extract_to_path)
@@ -84,16 +95,35 @@ BUILD_DIR = os.path.join(LIB_SOURCE, "build")
 shutil.rmtree(BUILD_DIR, True)
 shutil.rmtree(LIB_INSTALL, True)
 CMAKE_EXECUTABLE = os.path.join(os.path.abspath(os.curdir), "cmake-3.29.3", "bin", "cmake.exe")
-MINGW_DIR = os.path.join(os.path.abspath(os.curdir), "mingw64", "bin")
-CMAKE_C_COMPILER = os.path.join(MINGW_DIR, "gcc.exe")
-CMAKE_CXX_COMPILER = os.path.join(MINGW_DIR, "g++.exe")
+MINGW_DIR = os.path.join(os.path.abspath(os.curdir), "mingw32", "bin")
+CMAKE_C_COMPILER = os.path.join(MINGW_DIR, "clang.exe")
+CMAKE_CXX_COMPILER = os.path.join(MINGW_DIR, "clang++.exe")
+CMAKE_MAKE_PROGRAM = os.path.join(os.path.abspath(os.curdir), "ninja", "ninja.exe")
+# CMAKE_MAKE_PROGRAM = os.path.join(MINGW_DIR, "mingw32-make.exe")
+
+os.system(f'''set PATH=%PATH%;{MINGW_DIR} && {CMAKE_EXECUTABLE} -S {LIB_SOURCE} -G "Ninja" -B {BUILD_DIR} -DCMAKE_C_COMPILER={CMAKE_C_COMPILER} -DCMAKE_CXX_COMPILER={CMAKE_CXX_COMPILER} -DCMAKE_MAKE_PROGRAM={CMAKE_MAKE_PROGRAM} -DCMAKE_BUILD_TYPE={BUILD_TYPE} --install-prefix {LIB_INSTALL} && {CMAKE_EXECUTABLE} --build {BUILD_DIR} --parallel 8
+''')
+shutil.copytree(os.path.join(LIB_SOURCE, "include"), os.path.join(LIB_INSTALL, "include"))
+shutil.copytree(os.path.join(LIB_SOURCE, "deps"), os.path.join(LIB_INSTALL, "include", "deps"))
+os.makedirs(os.path.join(LIB_INSTALL, "lib"))
+shutil.copy(os.path.join(BUILD_DIR, "src", "libglfw3.a"), os.path.join(LIB_INSTALL, "lib", "libglfw3.a"))
+shutil.rmtree(LIB_SOURCE, True)
+
+LIB_NAME = "eigen-3.4.0"
+BUILD_TYPE = "Release"
+LIB_SOURCE = os.path.join(os.path.abspath(os.curdir), LIB_NAME)
+LIB_INSTALL = os.path.join(os.path.abspath(os.curdir), "Eigen")
+BUILD_DIR = os.path.join(LIB_SOURCE, "build")
+shutil.rmtree(BUILD_DIR, True)
+shutil.rmtree(LIB_INSTALL, True)
+CMAKE_EXECUTABLE = os.path.join(os.path.abspath(os.curdir), "cmake-3.29.3", "bin", "cmake.exe")
+MINGW_DIR = os.path.join(os.path.abspath(os.curdir), "mingw32", "bin")
+CMAKE_C_COMPILER = os.path.join(MINGW_DIR, "clang.exe")
+CMAKE_CXX_COMPILER = os.path.join(MINGW_DIR, "clang++.exe")
 CMAKE_MAKE_PROGRAM = os.path.join(os.path.abspath(os.curdir), "ninja", "ninja.exe")
 # CMAKE_MAKE_PROGRAM = os.path.join(MINGW_DIR, "mingw32-make.exe")
 
 os.system(f'''set PATH=%PATH%;{MINGW_DIR} && {CMAKE_EXECUTABLE} -S {LIB_SOURCE} -G "Ninja" -B {BUILD_DIR} -DCMAKE_C_COMPILER={CMAKE_C_COMPILER} -DCMAKE_CXX_COMPILER={CMAKE_CXX_COMPILER} -DCMAKE_MAKE_PROGRAM={CMAKE_MAKE_PROGRAM} -DCMAKE_BUILD_TYPE={BUILD_TYPE} --install-prefix {LIB_INSTALL} && {CMAKE_EXECUTABLE} --build {BUILD_DIR} --target install --parallel 8
 ''')
 
-shutil.copytree(os.path.join(LIB_SOURCE, "deps"), os.path.join(LIB_INSTALL, "include", "deps"))
-
-
-
+shutil.rmtree(LIB_SOURCE, True)
